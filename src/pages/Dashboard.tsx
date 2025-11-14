@@ -169,7 +169,7 @@ const Dashboard = () => {
           <CardHeader>
             <CardTitle>Quick Actions</CardTitle>
           </CardHeader>
-          <CardContent className="grid gap-4 md:grid-cols-2">
+          <CardContent className="grid gap-4 md:grid-cols-3">
             <Button
               className="h-24 bg-primary hover:bg-primary/90 flex flex-col items-center justify-center space-y-2"
               onClick={() => navigate("/register")}
@@ -184,6 +184,14 @@ const Dashboard = () => {
             >
               <IdCard className="h-8 w-8" />
               <span className="text-base">View All Applicants</span>
+            </Button>
+            <Button
+              variant="outline"
+              className="h-24 flex flex-col items-center justify-center space-y-2 border-primary text-primary hover:bg-primary/5"
+              onClick={() => navigate("/id-upload")}
+            >
+              <FileUp className="h-8 w-8" />
+              <span className="text-base">Upload ID Numbers</span>
             </Button>
           </CardContent>
         </Card>
