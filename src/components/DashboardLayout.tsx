@@ -1,9 +1,24 @@
 import { ReactNode } from "react";
-import { Shield } from "lucide-react";
+import { Shield, Home, UserPlus, Users, Upload } from "lucide-react";
+import { NavLink } from "./NavLink";
+import { cn } from "@/lib/utils";
 
 interface DashboardLayoutProps {
   children: ReactNode;
 }
+
+const CustomNavLink = ({ to, icon: Icon, children }: { to: string; icon: any; children: React.ReactNode }) => {
+  return (
+    <NavLink
+      to={to}
+      className="px-4 py-3 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2"
+      activeClassName="text-primary border-b-2 border-primary"
+    >
+      <Icon className="h-4 w-4" />
+      {children}
+    </NavLink>
+  );
+};
 
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   return (
@@ -22,6 +37,18 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           </div>
         </div>
       </header>
+
+      {/* Navigation */}
+      <nav className="bg-card border-b border-border">
+        <div className="container mx-auto px-4">
+          <div className="flex gap-1">
+            <CustomNavLink to="/dashboard" icon={Home}>Dashboard</CustomNavLink>
+            <CustomNavLink to="/register" icon={UserPlus}>Register</CustomNavLink>
+            <CustomNavLink to="/applicants" icon={Users}>Applicants</CustomNavLink>
+            <CustomNavLink to="/id-upload" icon={Upload}>Upload IDs</CustomNavLink>
+          </div>
+        </div>
+      </nav>
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">{children}</main>
