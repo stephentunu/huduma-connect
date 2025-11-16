@@ -56,14 +56,23 @@ const IDUpload = () => {
 
       if (error) throw error;
 
+      // Get applicant details for success page
+      const applicant = applicants?.find(a => a.id === selectedApplicantId);
+
       toast.success("ID uploaded and notification sent successfully!");
+      
+      // Navigate to success page with details
+      navigate('/id-upload-success', {
+        state: {
+          applicantName: applicant?.full_name,
+          applicationId: applicant?.application_id,
+          nationalIdNumber: nationalIdNumber,
+          email: data?.email || 'N/A',
+        }
+      });
+      
       setSelectedApplicantId("");
       setNationalIdNumber("");
-      
-      // Refresh the applicants list
-      setTimeout(() => {
-        navigate('/applicants');
-      }, 1500);
     } catch (error: any) {
       console.error('Error uploading ID:', error);
       toast.error(error.message || "Failed to upload ID and send notification");

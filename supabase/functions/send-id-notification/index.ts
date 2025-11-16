@@ -154,6 +154,7 @@ serve(async (req) => {
         JSON.stringify({
           success: true,
           message: 'ID uploaded and notification sent successfully',
+          email: applicant.email,
         }),
         {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
