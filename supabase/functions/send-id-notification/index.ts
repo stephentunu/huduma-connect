@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 
 const corsHeaders = {
@@ -62,118 +61,36 @@ serve(async (req) => {
       throw new Error(`Failed to insert national ID: ${idError.message}`);
     }
 
-    // Prepare email content
-    const emailSubject = 'Your National ID is Ready for Collection';
-    const emailBody = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #006400;">National ID Ready for Collection</h2>
-        <p>Dear ${applicant.full_name},</p>
-        <p>We are pleased to inform you that your National ID is now ready for collection at the Huduma Centre.</p>
-        <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
-          <p><strong>Application ID:</strong> ${applicant.application_id}</p>
-          <p><strong>National ID Number:</strong> ${national_id_number}</p>
-        </div>
-        <p><strong>What to bring when collecting your ID:</strong></p>
-        <ul>
-          <li>This notification (printed or on your phone)</li>
-          <li>Your application receipt</li>
-          <li>Any government-issued identification for verification</li>
-        </ul>
-        <p>Please visit your nearest Huduma Centre during working hours (Monday to Friday, 8:00 AM - 5:00 PM).</p>
-        <p>Thank you for your patience.</p>
-        <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
-        <p style="font-size: 12px; color: #666;">
-          This is an automated notification from the Huduma Centre National ID Registration System.
-        </p>
-      </div>
-    `;
-
-    // Configure Gmail SMTP client
-    const gmailUser = Deno.env.get('GMAIL_USER');
-    const gmailPassword = Deno.env.get('GMAIL_APP_PASSWORD');
-
-    if (!gmailUser || !gmailPassword) {
-      throw new Error('Gmail credentials not configured');
-    }
-
-    const client = new SMTPClient({
-      connection: {
-        hostname: "smtp.gmail.com",
-        port: 465,
-        tls: true,
-        auth: {
-          username: gmailUser,
-          password: gmailPassword,
-        },
-      },
-    });
-
-    // Create notification record
-    const notificationMessage = `Your National ID (${national_id_number}) is ready for collection.`;
-    const { data: notification, error: notificationError } = await supabase
+    // Create notification record (email sending will be handled separately)
+    const notificationMessage = `Your National ID (${national_id_number}) is ready for collection. Please visit the Huduma Centre with your application receipt.`;
+    const { error: notificationError } = await supabase
       .from('notifications')
       .insert({
         applicant_id,
         channel: 'email',
         message: notificationMessage,
         status: 'pending',
-      })
-      .select()
-      .single();
+      });
 
     if (notificationError) {
       throw new Error(`Failed to create notification: ${notificationError.message}`);
     }
 
-    try {
-      // Send email
-      await client.send({
-        from: gmailUser,
-        to: applicant.email,
-        subject: emailSubject,
-        content: emailBody,
-        html: emailBody,
-      });
+    console.log(`ID uploaded successfully for applicant ${applicant.full_name}`);
+    console.log(`Notification created for ${applicant.email}`);
 
-      await client.close();
-
-      // Update notification status to sent
-      await supabase
-        .from('notifications')
-        .update({
-          status: 'sent',
-          sent_at: new Date().toISOString(),
-          attempts: 1,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', notification.id);
-
-      console.log(`Email sent successfully to ${applicant.email}`);
-
-      return new Response(
-        JSON.stringify({
-          success: true,
-          message: 'ID uploaded and notification sent successfully',
-          email: applicant.email,
-        }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
-    } catch (emailError: any) {
-      // Update notification status to failed
-      await supabase
-        .from('notifications')
-        .update({
-          status: 'failed',
-          error_message: emailError.message,
-          attempts: 1,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', notification.id);
-
-      throw new Error(`Failed to send email: ${emailError.message}`);
-    }
+    return new Response(
+      JSON.stringify({
+        success: true,
+        message: 'ID uploaded and notification created successfully',
+        email: applicant.email,
+        applicant_name: applicant.full_name,
+        national_id_number,
+      }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
+    );
   } catch (error: any) {
     console.error('Error in send-id-notification function:', error);
     return new Response(
