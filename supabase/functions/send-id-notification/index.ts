@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
+import { Resend } from 'https://esm.sh/resend@4.0.0';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -61,15 +62,46 @@ serve(async (req) => {
       throw new Error(`Failed to insert national ID: ${idError.message}`);
     }
 
-    // Create notification record (email sending will be handled separately)
+    // Send email notification using Resend
     const notificationMessage = `Your National ID (${national_id_number}) is ready for collection. Please visit the Huduma Centre with your application receipt.`;
+    const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
+    
+    let emailStatus = 'sent';
+    let errorMessage = null;
+    
+    try {
+      const emailResponse = await resend.emails.send({
+        from: 'Huduma Centre <onboarding@resend.dev>',
+        to: [applicant.email],
+        subject: 'Your National ID is Ready for Collection',
+        html: `
+          <h2>National ID Ready</h2>
+          <p>Dear ${applicant.full_name},</p>
+          <p>${notificationMessage}</p>
+          <p><strong>National ID Number:</strong> ${national_id_number}</p>
+          <p><strong>Application ID:</strong> ${applicant.application_id}</p>
+          <br>
+          <p>Best regards,<br>Huduma Centre Team</p>
+        `,
+      });
+      
+      console.log('Email sent successfully:', emailResponse);
+    } catch (error: any) {
+      console.error('Failed to send email:', error);
+      emailStatus = 'failed';
+      errorMessage = error.message;
+    }
+
+    // Create notification record
     const { error: notificationError } = await supabase
       .from('notifications')
       .insert({
         applicant_id,
         channel: 'email',
         message: notificationMessage,
-        status: 'pending',
+        status: emailStatus,
+        error_message: errorMessage,
+        sent_at: emailStatus === 'sent' ? new Date().toISOString() : null,
       });
 
     if (notificationError) {
@@ -77,7 +109,6 @@ serve(async (req) => {
     }
 
     console.log(`ID uploaded successfully for applicant ${applicant.full_name}`);
-    console.log(`Notification created for ${applicant.email}`);
 
     return new Response(
       JSON.stringify({
