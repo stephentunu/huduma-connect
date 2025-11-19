@@ -86,7 +86,14 @@ serve(async (req) => {
         `,
       });
       
-      console.log('Email sent successfully:', emailResponse);
+      // Check if Resend returned an error (it doesn't throw exceptions)
+      if (emailResponse.error) {
+        console.error('Resend error:', emailResponse.error);
+        emailStatus = 'failed';
+        errorMessage = emailResponse.error.message || 'Failed to send email';
+      } else {
+        console.log('Email sent successfully:', emailResponse);
+      }
     } catch (error: any) {
       console.error('Failed to send email:', error);
       emailStatus = 'failed';
