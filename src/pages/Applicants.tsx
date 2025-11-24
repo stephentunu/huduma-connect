@@ -16,6 +16,7 @@ interface Applicant {
   phone: string;
   status: string;
   registration_date: string;
+  document_type: string;
 }
 
 const Applicants = () => {
@@ -91,7 +92,7 @@ const Applicants = () => {
             </Button>
             <h1 className="text-3xl font-bold text-primary">All Applicants</h1>
             <p className="text-muted-foreground mt-1">
-              View and manage ID applicants
+              View and manage document applicants
             </p>
           </div>
           <Button
@@ -129,6 +130,9 @@ const Applicants = () => {
                       <p className="text-sm text-muted-foreground mt-1">
                         Application ID: {applicant.application_id}
                       </p>
+                      <Badge variant="outline" className="mt-2">
+                        {applicant.document_type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                      </Badge>
                     </div>
                     {getStatusBadge(applicant.status)}
                   </div>

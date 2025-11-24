@@ -18,6 +18,7 @@ export type Database = {
         Row: {
           application_id: string
           created_at: string
+          document_type: Database["public"]["Enums"]["document_type"]
           email: string | null
           full_name: string
           id: string
@@ -30,6 +31,7 @@ export type Database = {
         Insert: {
           application_id: string
           created_at?: string
+          document_type?: Database["public"]["Enums"]["document_type"]
           email?: string | null
           full_name: string
           id?: string
@@ -42,6 +44,7 @@ export type Database = {
         Update: {
           application_id?: string
           created_at?: string
+          document_type?: Database["public"]["Enums"]["document_type"]
           email?: string | null
           full_name?: string
           id?: string
@@ -61,28 +64,31 @@ export type Database = {
           },
         ]
       }
-      national_ids: {
+      documents: {
         Row: {
           applicant_id: string
           created_at: string
+          document_number: string
+          document_type: Database["public"]["Enums"]["document_type"]
           id: string
-          national_id_number: string
           upload_date: string
           uploaded_by: string | null
         }
         Insert: {
           applicant_id: string
           created_at?: string
+          document_number: string
+          document_type?: Database["public"]["Enums"]["document_type"]
           id?: string
-          national_id_number: string
           upload_date?: string
           uploaded_by?: string | null
         }
         Update: {
           applicant_id?: string
           created_at?: string
+          document_number?: string
+          document_type?: Database["public"]["Enums"]["document_type"]
           id?: string
-          national_id_number?: string
           upload_date?: string
           uploaded_by?: string | null
         }
@@ -225,6 +231,15 @@ export type Database = {
     Enums: {
       app_role: "staff" | "admin"
       applicant_status: "registered" | "processing" | "ready" | "collected"
+      document_type:
+        | "national_id"
+        | "passport"
+        | "visa"
+        | "birth_certificate"
+        | "driving_license"
+        | "good_conduct_certificate"
+        | "marriage_certificate"
+        | "death_certificate"
       notification_channel: "sms" | "email"
       notification_status: "pending" | "sent" | "delivered" | "failed"
     }
@@ -356,6 +371,16 @@ export const Constants = {
     Enums: {
       app_role: ["staff", "admin"],
       applicant_status: ["registered", "processing", "ready", "collected"],
+      document_type: [
+        "national_id",
+        "passport",
+        "visa",
+        "birth_certificate",
+        "driving_license",
+        "good_conduct_certificate",
+        "marriage_certificate",
+        "death_certificate",
+      ],
       notification_channel: ["sms", "email"],
       notification_status: ["pending", "sent", "delivered", "failed"],
     },

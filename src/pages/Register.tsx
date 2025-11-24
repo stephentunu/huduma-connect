@@ -18,6 +18,7 @@ const Register = () => {
     fullName: "",
     email: "",
     phone: "",
+    documentType: "national_id",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -37,9 +38,10 @@ const Register = () => {
         full_name: formData.fullName,
         email: formData.email || null,
         phone: formData.phone,
+        document_type: formData.documentType,
         status: "registered",
         registered_by: user.id,
-      });
+      } as any);
 
       if (error) throw error;
 
@@ -53,6 +55,7 @@ const Register = () => {
         fullName: "",
         email: "",
         phone: "",
+        documentType: "national_id",
       });
 
       navigate("/applicants");
@@ -90,7 +93,7 @@ const Register = () => {
                   Register New Applicant
                 </CardTitle>
                 <CardDescription className="mt-1">
-                  Enter applicant details for National ID registration
+                  Enter applicant details for government document application
                 </CardDescription>
               </div>
             </div>
@@ -115,6 +118,30 @@ const Register = () => {
                 <p className="text-xs text-muted-foreground">
                   Unique application reference number
                 </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="documentType" className="text-base">
+                  Document Type <span className="text-destructive">*</span>
+                </Label>
+                <select
+                  id="documentType"
+                  value={formData.documentType}
+                  onChange={(e) =>
+                    setFormData({ ...formData, documentType: e.target.value })
+                  }
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  required
+                >
+                  <option value="national_id">National ID</option>
+                  <option value="passport">Passport</option>
+                  <option value="visa">Visa</option>
+                  <option value="birth_certificate">Birth Certificate</option>
+                  <option value="driving_license">Driving License</option>
+                  <option value="good_conduct_certificate">Good Conduct Certificate</option>
+                  <option value="marriage_certificate">Marriage Certificate</option>
+                  <option value="death_certificate">Death Certificate</option>
+                </select>
               </div>
 
               <div className="space-y-2">
