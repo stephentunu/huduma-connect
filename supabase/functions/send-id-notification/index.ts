@@ -14,10 +14,10 @@ serve(async (req) => {
   }
 
   try {
-    const { applicant_id, national_id_number } = await req.json();
+    const { applicant_id, document_number, document_type } = await req.json();
 
-    if (!applicant_id || !national_id_number) {
-      throw new Error('Missing required fields: applicant_id and national_id_number');
+    if (!applicant_id || !document_number) {
+      throw new Error('Missing required fields: applicant_id and document_number');
     }
 
     // Initialize Supabase client
@@ -28,7 +28,7 @@ serve(async (req) => {
     // Get applicant details
     const { data: applicant, error: applicantError } = await supabase
       .from('applicants')
-      .select('full_name, email, phone, application_id')
+      .select('full_name, email, phone, application_id, document_type')
       .eq('id', applicant_id)
       .single();
 
@@ -50,21 +50,27 @@ serve(async (req) => {
       throw new Error(`Failed to update applicant status: ${updateError.message}`);
     }
 
-    // Insert national ID record
-    const { error: idError } = await supabase
-      .from('national_ids')
+    // Insert document record
+    const { error: docError } = await supabase
+      .from('documents')
       .insert({
         applicant_id,
-        national_id_number,
+        document_number,
+        document_type: document_type || applicant.document_type,
         uploaded_by: req.headers.get('x-user-id'),
       });
 
-    if (idError) {
-      throw new Error(`Failed to insert national ID: ${idError.message}`);
+    if (docError) {
+      throw new Error(`Failed to insert document: ${docError.message}`);
     }
 
+    // Format document type for display
+    const documentTypeDisplay = (document_type || applicant.document_type)
+      .replace(/_/g, ' ')
+      .replace(/\b\w/g, (l: string) => l.toUpperCase());
+
     // Send email notification using Resend
-    const notificationMessage = `Your National ID (${national_id_number}) is ready for collection. Please visit the Huduma Centre with your application receipt.`;
+    const notificationMessage = `Your ${documentTypeDisplay} (${document_number}) is ready for collection. Please visit the Huduma Centre with your application receipt.`;
     const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
     
     let emailStatus = 'sent';
@@ -74,12 +80,13 @@ serve(async (req) => {
       const emailResponse = await resend.emails.send({
         from: 'Huduma Centre <onboarding@resend.dev>',
         to: [applicant.email],
-        subject: 'Your National ID is Ready for Collection',
+        subject: `Your ${documentTypeDisplay} is Ready for Collection`,
         html: `
-          <h2>National ID Ready</h2>
+          <h2>${documentTypeDisplay} Ready</h2>
           <p>Dear ${applicant.full_name},</p>
           <p>${notificationMessage}</p>
-          <p><strong>National ID Number:</strong> ${national_id_number}</p>
+          <p><strong>Document Type:</strong> ${documentTypeDisplay}</p>
+          <p><strong>Document Number:</strong> ${document_number}</p>
           <p><strong>Application ID:</strong> ${applicant.application_id}</p>
           <br>
           <p>Best regards,<br>Huduma Centre Team</p>
@@ -116,15 +123,16 @@ serve(async (req) => {
       throw new Error(`Failed to create notification: ${notificationError.message}`);
     }
 
-    console.log(`ID uploaded successfully for applicant ${applicant.full_name}`);
+    console.log(`Document uploaded successfully for applicant ${applicant.full_name}`);
 
     return new Response(
       JSON.stringify({
         success: true,
-        message: 'ID uploaded and notification created successfully',
+        message: 'Document uploaded and notification created successfully',
         email: applicant.email,
         applicant_name: applicant.full_name,
-        national_id_number,
+        document_number,
+        document_type: documentTypeDisplay,
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

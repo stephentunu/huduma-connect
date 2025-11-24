@@ -8,7 +8,9 @@ import DashboardLayout from "@/components/DashboardLayout";
 interface LocationState {
   applicantName: string;
   applicationId: string;
-  nationalIdNumber: string;
+  documentNumber?: string;
+  nationalIdNumber?: string;
+  documentType?: string;
   email: string;
 }
 
@@ -34,9 +36,9 @@ const IDUploadSuccess = () => {
             <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
               <CheckCircle className="h-10 w-10 text-primary" />
             </div>
-            <CardTitle className="text-2xl">ID Upload Successful!</CardTitle>
+            <CardTitle className="text-2xl">Document Upload Successful!</CardTitle>
             <CardDescription>
-              The National ID has been uploaded and notification sent successfully
+              The document has been uploaded and notification sent successfully
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -50,9 +52,15 @@ const IDUploadSuccess = () => {
                   <p className="text-sm text-muted-foreground">Application ID</p>
                   <p className="font-semibold">{state.applicationId}</p>
                 </div>
+                {state.documentType && (
+                  <div>
+                    <p className="text-sm text-muted-foreground">Document Type</p>
+                    <p className="font-semibold">{state.documentType.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</p>
+                  </div>
+                )}
                 <div>
-                  <p className="text-sm text-muted-foreground">National ID Number</p>
-                  <p className="font-semibold text-lg">{state.nationalIdNumber}</p>
+                  <p className="text-sm text-muted-foreground">Document Number</p>
+                  <p className="font-semibold text-lg">{state.documentNumber || state.nationalIdNumber}</p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Email Sent To</p>
@@ -80,7 +88,7 @@ const IDUploadSuccess = () => {
                 variant="outline"
               >
                 <Upload className="h-4 w-4 mr-2" />
-                Upload Another ID
+                Upload Another Document
               </Button>
               <Button
                 onClick={() => navigate('/applicants')}
