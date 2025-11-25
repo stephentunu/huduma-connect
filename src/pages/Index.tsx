@@ -92,12 +92,30 @@ const Index = () => {
       </div>
 
       {/* Footer */}
-      <footer className="bg-primary text-primary-foreground py-6 mt-16">
-        <div className="container mx-auto px-4 text-center">
-          <p>
-            © {new Date().getFullYear()} Republic of Kenya - Huduma Centre. All
-            rights reserved.
-          </p>
+      <footer className="bg-primary text-primary-foreground py-8 mt-16">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <p className="text-sm">
+              © {new Date().getFullYear()} Republic of Kenya - Huduma Centre. All
+              rights reserved.
+            </p>
+            <div className="flex gap-6">
+              <Button
+                variant="link"
+                onClick={() => navigate("/about")}
+                className="text-primary-foreground hover:text-accent"
+              >
+                About Us
+              </Button>
+              <Button
+                variant="link"
+                onClick={() => navigate("/contact")}
+                className="text-primary-foreground hover:text-accent"
+              >
+                Contact Us
+              </Button>
+            </div>
+          </div>
         </div>
       </footer>
     </div>
