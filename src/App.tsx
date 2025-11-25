@@ -10,6 +10,8 @@ import Register from "./pages/Register";
 import Applicants from "./pages/Applicants";
 import IDUpload from "./pages/IDUpload";
 import IDUploadSuccess from "./pages/IDUploadSuccess";
+import ContactUs from "./pages/ContactUs";
+import AboutUs from "./pages/AboutUs";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +30,8 @@ const App = () => (
           <Route path="/applicants" element={<Applicants />} />
           <Route path="/id-upload" element={<IDUpload />} />
           <Route path="/id-upload-success" element={<IDUploadSuccess />} />
+          <Route path="/contact" element={<ContactUs />} />
+          <Route path="/about" element={<AboutUs />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

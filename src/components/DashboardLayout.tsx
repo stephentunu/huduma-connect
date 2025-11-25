@@ -55,11 +55,27 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
       {/* Footer */}
       <footer className="bg-card border-t border-border mt-16">
-        <div className="container mx-auto px-4 py-6 text-center text-sm text-muted-foreground">
-          <p>
-            © {new Date().getFullYear()} Republic of Kenya - Huduma Centre. All
-            rights reserved.
-          </p>
+        <div className="container mx-auto px-4 py-6">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
+            <p>
+              © {new Date().getFullYear()} Republic of Kenya - Huduma Centre. All
+              rights reserved.
+            </p>
+            <div className="flex gap-6">
+              <NavLink
+                to="/about"
+                className="hover:text-primary transition-colors"
+              >
+                About Us
+              </NavLink>
+              <NavLink
+                to="/contact"
+                className="hover:text-primary transition-colors"
+              >
+                Contact Us
+              </NavLink>
+            </div>
+          </div>
         </div>
       </footer>
     </div>
