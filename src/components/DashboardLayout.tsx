@@ -1,7 +1,8 @@
-import { ReactNode } from "react";
-import { Shield, Home, UserPlus, Users, Upload } from "lucide-react";
+import { ReactNode, useEffect, useState } from "react";
+import { Shield, Home, UserPlus, Users, Upload, Settings } from "lucide-react";
 import { NavLink } from "./NavLink";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -21,6 +22,24 @@ const CustomNavLink = ({ to, icon: Icon, children }: { to: string; icon: any; ch
 };
 
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    checkAdminRole();
+  }, []);
+
+  const checkAdminRole = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data: roles } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id);
+
+    setIsAdmin(roles?.some((r) => r.role === "admin") || false);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5">
       {/* Header */}
@@ -46,6 +65,9 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             <CustomNavLink to="/register" icon={UserPlus}>Register</CustomNavLink>
             <CustomNavLink to="/applicants" icon={Users}>Applicants</CustomNavLink>
             <CustomNavLink to="/id-upload" icon={Upload}>Upload IDs</CustomNavLink>
+            {isAdmin && (
+              <CustomNavLink to="/admin" icon={Settings}>Admin</CustomNavLink>
+            )}
           </div>
         </div>
       </nav>
