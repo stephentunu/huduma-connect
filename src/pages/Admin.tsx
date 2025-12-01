@@ -8,22 +8,27 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Shield, UserPlus, Trash2 } from "lucide-react";
+import { Shield, UserPlus, Trash2, Users, Search, Mail } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 interface StaffMember {
   id: string;
   name: string;
   center_name: string;
-  email?: string;
+  email: string;
   roles: string[];
+  created_at?: string;
 }
 
 const Admin = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [staffMembers, setStaffMembers] = useState<StaffMember[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -74,7 +79,8 @@ const Admin = () => {
       .select(`
         id,
         name,
-        center_name
+        center_name,
+        created_at
       `);
 
     if (error) {
@@ -86,7 +92,7 @@ const Admin = () => {
       return;
     }
 
-    // Fetch roles for each user
+    // Fetch roles and email for each user
     const staffWithRoles = await Promise.all(
       profiles.map(async (profile) => {
         const { data: roles } = await supabase
@@ -94,8 +100,12 @@ const Admin = () => {
           .select("role")
           .eq("user_id", profile.id);
 
+        // Fetch email from auth.users via admin endpoint
+        const { data: { user } } = await supabase.auth.admin.getUserById(profile.id);
+
         return {
           ...profile,
+          email: user?.email || "N/A",
           roles: roles?.map((r) => r.role) || [],
         };
       })
@@ -135,6 +145,7 @@ const Admin = () => {
         role: "staff",
       });
 
+      setIsCreateDialogOpen(false);
       fetchStaffMembers();
     } catch (error: any) {
       toast({
@@ -170,6 +181,17 @@ const Admin = () => {
     }
   };
 
+  const filteredStaff = staffMembers.filter(
+    (staff) =>
+      staff.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      staff.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      staff.center_name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const totalStaff = staffMembers.length;
+  const totalAdmins = staffMembers.filter((s) => s.roles.includes("admin")).length;
+  const totalRegularStaff = totalStaff - totalAdmins;
+
   if (!isAdmin) {
     return null;
   }
@@ -177,29 +199,31 @@ const Admin = () => {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-primary flex items-center gap-2">
-            <Shield className="h-8 w-8" />
-            Admin Panel
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            Manage staff access and permissions
-          </p>
-        </div>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <UserPlus className="h-5 w-5" />
-              Create New Staff Member
-            </CardTitle>
-            <CardDescription>
-              Add authorized personnel to access the system
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleCreateStaff} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-primary flex items-center gap-2">
+              <Shield className="h-8 w-8" />
+              Admin Panel
+            </h1>
+            <p className="text-muted-foreground mt-2">
+              Manage staff access and permissions
+            </p>
+          </div>
+          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="gap-2">
+                <UserPlus className="h-4 w-4" />
+                Add Staff Member
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[500px]">
+              <DialogHeader>
+                <DialogTitle>Create New Staff Member</DialogTitle>
+                <DialogDescription>
+                  Add authorized personnel to access the system
+                </DialogDescription>
+              </DialogHeader>
+              <form onSubmit={handleCreateStaff} className="space-y-4 mt-4">
                 <div className="space-y-2">
                   <Label htmlFor="staff-name">Full Name</Label>
                   <Input
@@ -270,76 +294,155 @@ const Admin = () => {
                     </SelectContent>
                   </Select>
                 </div>
-              </div>
-              <Button
-                type="submit"
-                className="w-full bg-primary hover:bg-primary/90"
-                disabled={isLoading}
-              >
-                {isLoading ? "Creating..." : "Create Staff Member"}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Creating..." : "Create Staff Member"}
+                </Button>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
 
+        {/* Statistics Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Total Staff
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold flex items-center gap-2">
+                <Users className="h-6 w-6 text-primary" />
+                {totalStaff}
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Administrators
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold flex items-center gap-2">
+                <Shield className="h-6 w-6 text-primary" />
+                {totalAdmins}
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Regular Staff
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold flex items-center gap-2">
+                <Users className="h-6 w-6 text-muted-foreground" />
+                {totalRegularStaff}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Staff Members Table */}
         <Card>
           <CardHeader>
-            <CardTitle>Staff Members</CardTitle>
-            <CardDescription>
-              Manage existing staff accounts
-            </CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>System Users</CardTitle>
+                <CardDescription>
+                  View and manage all staff accounts
+                </CardDescription>
+              </div>
+              <div className="relative w-64">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search users..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {staffMembers.map((staff) => (
-                <div
-                  key={staff.id}
-                  className="flex items-center justify-between p-4 border border-border rounded-lg"
-                >
-                  <div className="space-y-1">
-                    <div className="font-medium">{staff.name}</div>
-                    <div className="text-sm text-muted-foreground">
-                      {staff.center_name}
-                    </div>
-                    <div className="flex gap-2 mt-2">
-                      {staff.roles.map((role) => (
-                        <Badge
-                          key={role}
-                          variant={role === "admin" ? "default" : "secondary"}
-                        >
-                          {role}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="destructive" size="sm">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Remove Staff Member?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This will permanently remove {staff.name} from the system.
-                          This action cannot be undone.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={() => handleDeleteStaff(staff.id)}
-                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                        >
-                          Remove
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </div>
-              ))}
-            </div>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Centre</TableHead>
+                  <TableHead>Roles</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredStaff.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center text-muted-foreground">
+                      {searchQuery ? "No users found matching your search" : "No staff members yet"}
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredStaff.map((staff) => (
+                    <TableRow key={staff.id}>
+                      <TableCell className="font-medium">{staff.name}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Mail className="h-4 w-4 text-muted-foreground" />
+                          {staff.email}
+                        </div>
+                      </TableCell>
+                      <TableCell>{staff.center_name}</TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          {staff.roles.map((role) => (
+                            <Badge
+                              key={role}
+                              variant={role === "admin" ? "default" : "secondary"}
+                            >
+                              {role}
+                            </Badge>
+                          ))}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Remove Staff Member?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This will permanently remove {staff.name} ({staff.email}) from the system.
+                                This action cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleDeleteStaff(staff.id)}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              >
+                                Remove
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
           </CardContent>
         </Card>
       </div>
