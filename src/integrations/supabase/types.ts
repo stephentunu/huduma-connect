@@ -166,6 +166,7 @@ export type Database = {
         Row: {
           center_name: string
           created_at: string
+          email: string | null
           id: string
           name: string
           updated_at: string
@@ -173,6 +174,7 @@ export type Database = {
         Insert: {
           center_name: string
           created_at?: string
+          email?: string | null
           id: string
           name: string
           updated_at?: string
@@ -180,6 +182,7 @@ export type Database = {
         Update: {
           center_name?: string
           created_at?: string
+          email?: string | null
           id?: string
           name?: string
           updated_at?: string

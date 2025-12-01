@@ -80,6 +80,7 @@ const Admin = () => {
         id,
         name,
         center_name,
+        email,
         created_at
       `);
 
@@ -92,7 +93,7 @@ const Admin = () => {
       return;
     }
 
-    // Fetch roles and email for each user
+    // Fetch roles for each user
     const staffWithRoles = await Promise.all(
       profiles.map(async (profile) => {
         const { data: roles } = await supabase
@@ -100,12 +101,9 @@ const Admin = () => {
           .select("role")
           .eq("user_id", profile.id);
 
-        // Fetch email from auth.users via admin endpoint
-        const { data: { user } } = await supabase.auth.admin.getUserById(profile.id);
-
         return {
           ...profile,
-          email: user?.email || "N/A",
+          email: profile.email || "N/A",
           roles: roles?.map((r) => r.role) || [],
         };
       })
