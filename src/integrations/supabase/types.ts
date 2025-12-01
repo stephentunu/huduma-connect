@@ -166,6 +166,7 @@ export type Database = {
         Row: {
           center_name: string
           created_at: string
+          created_by: string | null
           email: string | null
           id: string
           name: string
@@ -174,6 +175,7 @@ export type Database = {
         Insert: {
           center_name: string
           created_at?: string
+          created_by?: string | null
           email?: string | null
           id: string
           name: string
@@ -182,12 +184,21 @@ export type Database = {
         Update: {
           center_name?: string
           created_at?: string
+          created_by?: string | null
           email?: string | null
           id?: string
           name?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
