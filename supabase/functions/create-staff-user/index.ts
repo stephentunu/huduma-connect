@@ -13,6 +13,27 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // Get the current admin user from the request
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      throw new Error('No authorization header');
+    }
+
+    const supabaseClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      {
+        global: {
+          headers: { Authorization: authHeader },
+        },
+      }
+    );
+
+    const { data: { user: currentAdmin } } = await supabaseClient.auth.getUser();
+    if (!currentAdmin) {
+      throw new Error('Not authenticated');
+    }
+
     const { email, password, name, centerName, role } = await req.json();
 
     const supabaseAdmin = createClient(
@@ -34,6 +55,7 @@ Deno.serve(async (req) => {
       user_metadata: {
         name,
         center_name: centerName,
+        created_by: currentAdmin.id,
       },
     });
 

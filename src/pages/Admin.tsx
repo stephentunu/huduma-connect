@@ -21,6 +21,8 @@ interface StaffMember {
   email: string;
   roles: string[];
   created_at?: string;
+  created_by?: string | null;
+  creator_name?: string | null;
 }
 
 const Admin = () => {
@@ -81,7 +83,9 @@ const Admin = () => {
         name,
         center_name,
         email,
-        created_at
+        created_at,
+        created_by,
+        creator:created_by(name)
       `);
 
     if (error) {
@@ -105,6 +109,7 @@ const Admin = () => {
           ...profile,
           email: profile.email || "N/A",
           roles: roles?.map((r) => r.role) || [],
+          creator_name: profile.creator?.name || null,
         };
       })
     );
@@ -376,13 +381,14 @@ const Admin = () => {
                   <TableHead>Email</TableHead>
                   <TableHead>Centre</TableHead>
                   <TableHead>Roles</TableHead>
+                  <TableHead>Created By</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredStaff.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center text-muted-foreground">
+                    <TableCell colSpan={6} className="text-center text-muted-foreground">
                       {searchQuery ? "No users found matching your search" : "No staff members yet"}
                     </TableCell>
                   </TableRow>
@@ -408,6 +414,9 @@ const Admin = () => {
                             </Badge>
                           ))}
                         </div>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {staff.creator_name || "System"}
                       </TableCell>
                       <TableCell className="text-right">
                         <AlertDialog>
