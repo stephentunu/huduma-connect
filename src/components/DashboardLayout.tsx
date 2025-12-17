@@ -1,5 +1,5 @@
 import { ReactNode, useEffect, useState } from "react";
-import { Shield, Home, UserPlus, Users, Upload, Settings } from "lucide-react";
+import { Shield, Home, UserPlus, Users, Upload, Settings, CalendarDays } from "lucide-react";
 import { NavLink } from "./NavLink";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -60,10 +60,11 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       {/* Navigation */}
       <nav className="bg-card border-b border-border">
         <div className="container mx-auto px-4">
-          <div className="flex gap-1">
+          <div className="flex gap-1 flex-wrap">
             <CustomNavLink to="/dashboard" icon={Home}>Dashboard</CustomNavLink>
             <CustomNavLink to="/register" icon={UserPlus}>Register</CustomNavLink>
             <CustomNavLink to="/applicants" icon={Users}>Applicants</CustomNavLink>
+            <CustomNavLink to="/appointments" icon={CalendarDays}>Appointments</CustomNavLink>
             <CustomNavLink to="/id-upload" icon={Upload}>Upload IDs</CustomNavLink>
             {isAdmin && (
               <CustomNavLink to="/admin" icon={Settings}>Admin</CustomNavLink>

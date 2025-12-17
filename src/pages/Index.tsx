@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Shield, CheckCircle2, Bell, Users } from "lucide-react";
+import { Shield, CheckCircle2, Bell, Users, CalendarDays } from "lucide-react";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -23,11 +23,20 @@ const Index = () => {
             Streamlining National ID collection through automated SMS and email
             notifications to Kenyan citizens
           </p>
-          <div className="flex gap-4 justify-center pt-4">
+          <div className="flex gap-4 justify-center pt-4 flex-wrap">
             <Button
               size="lg"
+              onClick={() => navigate("/citizen-auth")}
+              className="bg-accent text-accent-foreground hover:bg-accent/90 text-lg px-8"
+            >
+              <CalendarDays className="h-5 w-5 mr-2" />
+              Book Appointment
+            </Button>
+            <Button
+              size="lg"
+              variant="outline"
               onClick={() => navigate("/auth")}
-              className="bg-primary hover:bg-primary/90 text-lg px-8"
+              className="text-lg px-8"
             >
               Staff Login
             </Button>
