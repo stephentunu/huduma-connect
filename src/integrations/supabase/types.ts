@@ -64,6 +64,112 @@ export type Database = {
           },
         ]
       }
+      appointment_queue: {
+        Row: {
+          average_service_time_minutes: number
+          centre_id: string
+          created_at: string
+          current_queue_number: number
+          id: string
+          queue_date: string
+          updated_at: string
+        }
+        Insert: {
+          average_service_time_minutes?: number
+          centre_id: string
+          created_at?: string
+          current_queue_number?: number
+          id?: string
+          queue_date?: string
+          updated_at?: string
+        }
+        Update: {
+          average_service_time_minutes?: number
+          centre_id?: string
+          created_at?: string
+          current_queue_number?: number
+          id?: string
+          queue_date?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointment_queue_centre_id_fkey"
+            columns: ["centre_id"]
+            isOneToOne: false
+            referencedRelation: "huduma_centres"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      appointments: {
+        Row: {
+          appointment_date: string
+          appointment_time: string
+          approved_at: string | null
+          approved_by: string | null
+          centre_id: string
+          citizen_id: string
+          created_at: string
+          estimated_wait_minutes: number | null
+          id: string
+          notes: string | null
+          queue_number: number | null
+          rescheduled_date: string | null
+          rescheduled_time: string | null
+          service_type: Database["public"]["Enums"]["service_type"]
+          staff_notes: string | null
+          status: Database["public"]["Enums"]["appointment_status"]
+          updated_at: string
+        }
+        Insert: {
+          appointment_date: string
+          appointment_time: string
+          approved_at?: string | null
+          approved_by?: string | null
+          centre_id: string
+          citizen_id: string
+          created_at?: string
+          estimated_wait_minutes?: number | null
+          id?: string
+          notes?: string | null
+          queue_number?: number | null
+          rescheduled_date?: string | null
+          rescheduled_time?: string | null
+          service_type: Database["public"]["Enums"]["service_type"]
+          staff_notes?: string | null
+          status?: Database["public"]["Enums"]["appointment_status"]
+          updated_at?: string
+        }
+        Update: {
+          appointment_date?: string
+          appointment_time?: string
+          approved_at?: string | null
+          approved_by?: string | null
+          centre_id?: string
+          citizen_id?: string
+          created_at?: string
+          estimated_wait_minutes?: number | null
+          id?: string
+          notes?: string | null
+          queue_number?: number | null
+          rescheduled_date?: string | null
+          rescheduled_time?: string | null
+          service_type?: Database["public"]["Enums"]["service_type"]
+          staff_notes?: string | null
+          status?: Database["public"]["Enums"]["appointment_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointments_centre_id_fkey"
+            columns: ["centre_id"]
+            isOneToOne: false
+            referencedRelation: "huduma_centres"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       documents: {
         Row: {
           applicant_id: string
@@ -108,6 +214,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      huduma_centres: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          location: string
+          max_daily_appointments: number
+          name: string
+          operating_hours_end: string
+          operating_hours_start: string
+          slot_duration_minutes: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          location: string
+          max_daily_appointments?: number
+          name: string
+          operating_hours_end?: string
+          operating_hours_start?: string
+          slot_duration_minutes?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          location?: string
+          max_daily_appointments?: number
+          name?: string
+          operating_hours_end?: string
+          operating_hours_start?: string
+          slot_duration_minutes?: number
+          updated_at?: string
+        }
+        Relationships: []
       }
       notifications: {
         Row: {
@@ -234,6 +379,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_wait_time: {
+        Args: { p_centre_id: string; p_queue_number: number }
+        Returns: number
+      }
+      get_next_queue_number: {
+        Args: { p_centre_id: string; p_date: string }
+        Returns: number
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -245,6 +398,13 @@ export type Database = {
     Enums: {
       app_role: "staff" | "admin" | "citizen"
       applicant_status: "registered" | "processing" | "ready" | "collected"
+      appointment_status:
+        | "pending"
+        | "approved"
+        | "rescheduled"
+        | "cancelled"
+        | "completed"
+        | "no_show"
       document_type:
         | "national_id"
         | "passport"
@@ -256,6 +416,7 @@ export type Database = {
         | "death_certificate"
       notification_channel: "sms" | "email"
       notification_status: "pending" | "sent" | "delivered" | "failed"
+      service_type: "id_application" | "id_replacement" | "id_collection"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -385,6 +546,14 @@ export const Constants = {
     Enums: {
       app_role: ["staff", "admin", "citizen"],
       applicant_status: ["registered", "processing", "ready", "collected"],
+      appointment_status: [
+        "pending",
+        "approved",
+        "rescheduled",
+        "cancelled",
+        "completed",
+        "no_show",
+      ],
       document_type: [
         "national_id",
         "passport",
@@ -397,6 +566,7 @@ export const Constants = {
       ],
       notification_channel: ["sms", "email"],
       notification_status: ["pending", "sent", "delivered", "failed"],
+      service_type: ["id_application", "id_replacement", "id_collection"],
     },
   },
 } as const

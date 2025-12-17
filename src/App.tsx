@@ -14,6 +14,9 @@ import IDUploadSuccess from "./pages/IDUploadSuccess";
 import ContactUs from "./pages/ContactUs";
 import AboutUs from "./pages/AboutUs";
 import NotFound from "./pages/NotFound";
+import CitizenAuth from "./pages/CitizenAuth";
+import CitizenDashboard from "./pages/CitizenDashboard";
+import StaffAppointments from "./pages/StaffAppointments";
 
 const queryClient = new QueryClient();
 
@@ -34,6 +37,11 @@ const App = () => (
           <Route path="/id-upload-success" element={<IDUploadSuccess />} />
           <Route path="/contact" element={<ContactUs />} />
           <Route path="/about" element={<AboutUs />} />
+          {/* Citizen Portal Routes */}
+          <Route path="/citizen-auth" element={<CitizenAuth />} />
+          <Route path="/citizen" element={<CitizenDashboard />} />
+          {/* Staff Appointments */}
+          <Route path="/appointments" element={<StaffAppointments />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

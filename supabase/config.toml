@@ -5,3 +5,12 @@ enabled = true
 
 [functions.send-id-notification]
 verify_jwt = false
+
+[functions.create-staff-user]
+verify_jwt = true
+
+[functions.delete-staff-user]
+verify_jwt = true
+
+[functions.send-appointment-notification]
+verify_jwt = true
