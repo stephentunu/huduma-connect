@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,41 +8,60 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { CalendarDays, User } from "lucide-react";
+import { CalendarDays } from "lucide-react";
 
 const CitizenAuth = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const [session, setSession] = useState<Session | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   const [loginData, setLoginData] = useState({ email: "", password: "" });
-  const [signupData, setSignupData] = useState({ 
-    email: "", 
-    password: "", 
+  const [signupData, setSignupData] = useState({
+    email: "",
+    password: "",
     confirmPassword: "",
     fullName: "",
-    phone: ""
+    phone: "",
   });
 
+  const redirectIfCitizen = async (userId: string) => {
+    const { data: roles, error } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId);
+
+    if (error) return;
+
+    if (roles?.some((r) => r.role === "citizen")) {
+      navigate("/citizen", { replace: true });
+    }
+  };
+
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (session?.user) {
-          // Check if user is a citizen
-          const { data: roles } = await supabase
-            .from('user_roles')
-            .select('role')
-            .eq('user_id', session.user.id);
-          
-          if (roles?.some(r => r.role === 'citizen')) {
-            navigate("/citizen");
-          }
-        }
-      }
-    );
+    // IMPORTANT: keep auth callback synchronous (no awaits) to avoid auth deadlocks.
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      setSession(nextSession);
+    });
+
+    // Also handle the case where the user is already logged in on page load.
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session);
+    });
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, []);
+
+  useEffect(() => {
+    if (!session?.user) return;
+
+    // Defer role lookup outside the auth callback.
+    setTimeout(() => {
+      redirectIfCitizen(session.user.id);
+    }, 0);
+  }, [session?.user?.id]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,11 +78,11 @@ const CitizenAuth = () => {
       if (data.user) {
         // Check if user has citizen role
         const { data: roles } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', data.user.id);
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", data.user.id);
 
-        if (!roles?.some(r => r.role === 'citizen')) {
+        if (!roles?.some((r) => r.role === "citizen")) {
           await supabase.auth.signOut();
           toast({
             title: "Access denied",
@@ -76,7 +96,7 @@ const CitizenAuth = () => {
           title: "Welcome!",
           description: "You have successfully logged in.",
         });
-        navigate("/citizen");
+        navigate("/citizen", { replace: true });
       }
     } catch (error: any) {
       toast({
