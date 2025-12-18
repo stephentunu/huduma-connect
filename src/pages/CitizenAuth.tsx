@@ -131,18 +131,9 @@ const CitizenAuth = () => {
       if (error) throw error;
 
       if (data.user) {
-        // Insert citizen role
-        const { error: roleError } = await supabase
-          .from('user_roles')
-          .insert({ user_id: data.user.id, role: 'citizen' });
-
-        if (roleError) {
-          console.error('Error assigning role:', roleError);
-        }
-
         toast({
           title: "Account created!",
-          description: "Please check your email to verify your account, or log in if auto-confirm is enabled.",
+          description: "You can now log in to book your appointments.",
         });
       }
     } catch (error: any) {
