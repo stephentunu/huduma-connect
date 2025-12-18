@@ -130,10 +130,18 @@ const CitizenAuth = () => {
 
       if (error) throw error;
 
-      if (data.user) {
+      if (data.user && data.session) {
+        // Auto-confirm is enabled, user is logged in immediately
         toast({
           title: "Account created!",
-          description: "You can now log in to book your appointments.",
+          description: "Welcome to the Citizen Portal.",
+        });
+        navigate("/citizen");
+      } else if (data.user) {
+        // Email confirmation required
+        toast({
+          title: "Account created!",
+          description: "Please check your email to verify your account.",
         });
       }
     } catch (error: any) {
