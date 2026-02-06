@@ -1,8 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import nodemailer from "https://esm.sh/nodemailer@6.9.7";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
-
-// Gmail SMTP transporter will be created when sending emails
+import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -161,27 +159,38 @@ const handler = async (req: Request): Promise<Response> => {
       `;
     }
 
-    // Send email via Gmail SMTP
-    const transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",
-      port: 587,
-      secure: false,
-      auth: {
-        user: Deno.env.get("GMAIL_USER"),
-        pass: Deno.env.get("GMAIL_APP_PASSWORD"),
+    // Send email via Gmail SMTP using denomailer
+    const gmailUser = Deno.env.get("GMAIL_USER");
+    const gmailPassword = Deno.env.get("GMAIL_APP_PASSWORD");
+
+    if (!gmailUser || !gmailPassword) {
+      throw new Error("Gmail credentials not configured");
+    }
+
+    const client = new SMTPClient({
+      connection: {
+        hostname: "smtp.gmail.com",
+        port: 465,
+        tls: true,
+        auth: {
+          username: gmailUser,
+          password: gmailPassword,
+        },
       },
     });
 
-    const emailResponse = await transporter.sendMail({
-      from: `Huduma Centre <${Deno.env.get("GMAIL_USER")}>`,
+    await client.send({
+      from: gmailUser,
       to: citizenEmail,
       subject,
       html: htmlContent,
     });
 
-    console.log("Email sent successfully:", emailResponse);
+    await client.close();
 
-    return new Response(JSON.stringify({ success: true, emailResponse }), {
+    console.log("Email sent successfully to:", citizenEmail);
+
+    return new Response(JSON.stringify({ success: true }), {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });

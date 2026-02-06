@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
-import nodemailer from 'https://esm.sh/nodemailer@6.9.7';
+import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -69,25 +69,34 @@ serve(async (req) => {
       .replace(/_/g, ' ')
       .replace(/\b\w/g, (l: string) => l.toUpperCase());
 
-    // Send email notification using Gmail SMTP
+    // Send email notification using Gmail SMTP with denomailer
     const notificationMessage = `Your ${documentTypeDisplay} (${document_number}) is ready for collection. Please visit the Huduma Centre with your application receipt.`;
     
     let emailStatus = 'sent';
     let errorMessage = null;
     
     try {
-      const transporter = nodemailer.createTransport({
-        host: 'smtp.gmail.com',
-        port: 587,
-        secure: false,
-        auth: {
-          user: Deno.env.get('GMAIL_USER'),
-          pass: Deno.env.get('GMAIL_APP_PASSWORD'),
+      const gmailUser = Deno.env.get('GMAIL_USER');
+      const gmailPassword = Deno.env.get('GMAIL_APP_PASSWORD');
+
+      if (!gmailUser || !gmailPassword) {
+        throw new Error('Gmail credentials not configured');
+      }
+
+      const client = new SMTPClient({
+        connection: {
+          hostname: "smtp.gmail.com",
+          port: 465,
+          tls: true,
+          auth: {
+            username: gmailUser,
+            password: gmailPassword,
+          },
         },
       });
 
-      const emailResponse = await transporter.sendMail({
-        from: `Huduma Centre <${Deno.env.get('GMAIL_USER')}>`,
+      await client.send({
+        from: gmailUser,
         to: applicant.email,
         subject: `Your ${documentTypeDisplay} is Ready for Collection`,
         html: `
@@ -101,8 +110,10 @@ serve(async (req) => {
           <p>Best regards,<br>Huduma Centre Team</p>
         `,
       });
+
+      await client.close();
       
-      console.log('Email sent successfully:', emailResponse);
+      console.log('Email sent successfully to:', applicant.email);
     } catch (error: any) {
       console.error('Failed to send email:', error);
       emailStatus = 'failed';
@@ -135,6 +146,7 @@ serve(async (req) => {
         applicant_name: applicant.full_name,
         document_number,
         document_type: documentTypeDisplay,
+        email_status: emailStatus,
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
