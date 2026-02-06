@@ -1,8 +1,8 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { Resend } from "https://esm.sh/resend@2.0.0";
+import nodemailer from "https://esm.sh/nodemailer@6.9.7";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+// Gmail SMTP transporter will be created when sending emails
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -161,10 +161,20 @@ const handler = async (req: Request): Promise<Response> => {
       `;
     }
 
-    // Send email
-    const emailResponse = await resend.emails.send({
-      from: "Huduma Centre <onboarding@resend.dev>",
-      to: [citizenEmail],
+    // Send email via Gmail SMTP
+    const transporter = nodemailer.createTransport({
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false,
+      auth: {
+        user: Deno.env.get("GMAIL_USER"),
+        pass: Deno.env.get("GMAIL_APP_PASSWORD"),
+      },
+    });
+
+    const emailResponse = await transporter.sendMail({
+      from: `Huduma Centre <${Deno.env.get("GMAIL_USER")}>`,
+      to: citizenEmail,
       subject,
       html: htmlContent,
     });
