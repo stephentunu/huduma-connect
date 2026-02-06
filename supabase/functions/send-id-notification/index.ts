@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
-import { Resend } from 'https://esm.sh/resend@4.0.0';
+import nodemailer from 'https://esm.sh/nodemailer@6.9.7';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -69,17 +69,26 @@ serve(async (req) => {
       .replace(/_/g, ' ')
       .replace(/\b\w/g, (l: string) => l.toUpperCase());
 
-    // Send email notification using Resend
+    // Send email notification using Gmail SMTP
     const notificationMessage = `Your ${documentTypeDisplay} (${document_number}) is ready for collection. Please visit the Huduma Centre with your application receipt.`;
-    const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
     
     let emailStatus = 'sent';
     let errorMessage = null;
     
     try {
-      const emailResponse = await resend.emails.send({
-        from: 'Huduma Centre <onboarding@resend.dev>',
-        to: [applicant.email],
+      const transporter = nodemailer.createTransport({
+        host: 'smtp.gmail.com',
+        port: 587,
+        secure: false,
+        auth: {
+          user: Deno.env.get('GMAIL_USER'),
+          pass: Deno.env.get('GMAIL_APP_PASSWORD'),
+        },
+      });
+
+      const emailResponse = await transporter.sendMail({
+        from: `Huduma Centre <${Deno.env.get('GMAIL_USER')}>`,
+        to: applicant.email,
         subject: `Your ${documentTypeDisplay} is Ready for Collection`,
         html: `
           <h2>${documentTypeDisplay} Ready</h2>
@@ -93,14 +102,7 @@ serve(async (req) => {
         `,
       });
       
-      // Check if Resend returned an error (it doesn't throw exceptions)
-      if (emailResponse.error) {
-        console.error('Resend error:', emailResponse.error);
-        emailStatus = 'failed';
-        errorMessage = emailResponse.error.message || 'Failed to send email';
-      } else {
-        console.log('Email sent successfully:', emailResponse);
-      }
+      console.log('Email sent successfully:', emailResponse);
     } catch (error: any) {
       console.error('Failed to send email:', error);
       emailStatus = 'failed';
