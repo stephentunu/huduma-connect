@@ -60,7 +60,15 @@ const IDUpload = () => {
 
       if (error) throw error;
 
-      toast.success("Document uploaded and notification sent successfully!");
+      const emailStatus = data?.email_status as string | undefined;
+
+      if (emailStatus === 'failed') {
+        toast.error(
+          "Document saved, but email failed to send. Please confirm the recipient email or try again."
+        );
+      } else {
+        toast.success("Document uploaded and notification sent successfully!");
+      }
       
       // Navigate to success page with details
       navigate('/id-upload-success', {
@@ -70,6 +78,7 @@ const IDUpload = () => {
           documentNumber: documentNumber,
           documentType: applicant?.document_type,
           email: data?.email || 'N/A',
+          emailStatus: emailStatus || 'unknown',
         }
       });
       
