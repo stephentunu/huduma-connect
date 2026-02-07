@@ -76,11 +76,18 @@ serve(async (req) => {
     let errorMessage = null;
     
     try {
-      const gmailUser = Deno.env.get('GMAIL_USER');
+      const gmailUserRaw = Deno.env.get('GMAIL_USER');
       const gmailPassword = Deno.env.get('GMAIL_APP_PASSWORD');
 
-      if (!gmailUser || !gmailPassword) {
+      if (!gmailUserRaw || !gmailPassword) {
         throw new Error('Gmail credentials not configured');
+      }
+
+      // denomailer is strict about the "from" value being a plain email address
+      const gmailUser = gmailUserRaw.trim();
+      const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(gmailUser);
+      if (!isValidEmail) {
+        throw new Error(`GMAIL_USER is not a valid email address: "${gmailUserRaw}"`);
       }
 
       const client = new SMTPClient({
@@ -96,6 +103,7 @@ serve(async (req) => {
       });
 
       await client.send({
+        // Keep as a raw email to satisfy denomailer validation
         from: gmailUser,
         to: applicant.email,
         subject: `Your ${documentTypeDisplay} is Ready for Collection`,
@@ -112,7 +120,7 @@ serve(async (req) => {
       });
 
       await client.close();
-      
+
       console.log('Email sent successfully to:', applicant.email);
     } catch (error: any) {
       console.error('Failed to send email:', error);
