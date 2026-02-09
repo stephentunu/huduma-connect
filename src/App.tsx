@@ -17,6 +17,7 @@ import NotFound from "./pages/NotFound";
 import CitizenAuth from "./pages/CitizenAuth";
 import CitizenDashboard from "./pages/CitizenDashboard";
 import StaffAppointments from "./pages/StaffAppointments";
+import Analytics from "./pages/Analytics";
 
 const queryClient = new QueryClient();
 
@@ -42,6 +43,7 @@ const App = () => (
           <Route path="/citizen" element={<CitizenDashboard />} />
           {/* Staff Appointments */}
           <Route path="/appointments" element={<StaffAppointments />} />
+          <Route path="/analytics" element={<Analytics />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
