@@ -1,5 +1,6 @@
 import { ReactNode, useEffect, useState } from "react";
 import { Shield, Home, UserPlus, Users, Upload, Settings, CalendarDays, BarChart3 } from "lucide-react";
+import NotificationBell from "./NotificationBell";
 import { NavLink } from "./NavLink";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -44,16 +45,19 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5">
       {/* Header */}
       <header className="bg-primary text-primary-foreground shadow-lg border-b-4 border-accent">
-        <div className="container mx-auto px-4 py-4 flex items-center space-x-3">
-          <div className="bg-accent text-accent-foreground rounded-full p-2">
-            <Shield className="h-6 w-6" />
+        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="bg-accent text-accent-foreground rounded-full p-2">
+              <Shield className="h-6 w-6" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold">Huduma Centre</h1>
+              <p className="text-xs text-primary-foreground/80">
+                National ID Notification System
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-2xl font-bold">Huduma Centre</h1>
-            <p className="text-xs text-primary-foreground/80">
-              National ID Notification System
-            </p>
-          </div>
+          <NotificationBell />
         </div>
       </header>
 
