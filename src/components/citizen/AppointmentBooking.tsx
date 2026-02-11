@@ -98,7 +98,7 @@ const AppointmentBooking = ({ userId, onBack }: AppointmentBookingProps) => {
 
     setIsLoading(true);
     try {
-      const { error } = await supabase
+      const { data: insertedAppointment, error } = await supabase
         .from('appointments')
         .insert({
           citizen_id: userId,
@@ -108,9 +108,32 @@ const AppointmentBooking = ({ userId, onBack }: AppointmentBookingProps) => {
           appointment_time: selectedTime + ':00',
           notes: notes || null,
           status: 'pending',
-        });
+        })
+        .select('id')
+        .single();
 
       if (error) throw error;
+
+      // Notify all staff/admin users about the new appointment
+      const { data: staffRoles } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .in('role', ['staff', 'admin']);
+
+      if (staffRoles && staffRoles.length > 0) {
+        const serviceLabel = selectedService === 'id_application' ? 'ID Application' :
+          selectedService === 'id_replacement' ? 'ID Replacement' : 'ID Collection';
+
+        const notifs = staffRoles.map((r) => ({
+          user_id: r.user_id,
+          title: 'New Appointment Booked',
+          message: `A citizen has booked a ${serviceLabel} appointment at ${selectedCentreData?.name} on ${format(selectedDate, 'MMM d, yyyy')} at ${selectedTime}.`,
+          type: 'appointment_booked',
+          related_id: insertedAppointment.id,
+        }));
+
+        await supabase.from('in_app_notifications').insert(notifs);
+      }
 
       toast({
         title: "Appointment booked!",

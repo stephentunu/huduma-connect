@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { CalendarDays, Clock, MapPin, LogOut, Plus, RefreshCw } from "lucide-react";
+import NotificationBell from "@/components/NotificationBell";
 import { format } from "date-fns";
 import AppointmentBooking from "@/components/citizen/AppointmentBooking";
 import QueueStatus from "@/components/citizen/QueueStatus";
@@ -166,10 +167,13 @@ const CitizenDashboard = () => {
               <p className="text-sm text-primary-foreground/80">Huduma Centre Appointments</p>
             </div>
           </div>
-          <Button variant="secondary" size="sm" onClick={handleLogout}>
-            <LogOut className="h-4 w-4 mr-2" />
-            Logout
-          </Button>
+          <div className="flex items-center gap-2">
+            <NotificationBell />
+            <Button variant="secondary" size="sm" onClick={handleLogout}>
+              <LogOut className="h-4 w-4 mr-2" />
+              Logout
+            </Button>
+          </div>
         </div>
       </header>
 

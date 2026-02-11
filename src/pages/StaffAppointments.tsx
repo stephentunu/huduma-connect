@@ -129,7 +129,16 @@ const StaffAppointments = () => {
 
       if (error) throw error;
 
-      // Send notification
+      // Send in-app notification to citizen
+      await supabase.from('in_app_notifications').insert({
+        user_id: selectedAppointment.citizen_id,
+        title: 'Appointment Approved',
+        message: `Your appointment on ${format(new Date(selectedAppointment.appointment_date), 'MMM d, yyyy')} at ${selectedAppointment.appointment_time.slice(0, 5)} has been approved. Queue #${queueNumber}.`,
+        type: 'appointment_approved',
+        related_id: selectedAppointment.id,
+      });
+
+      // Send email notification
       await supabase.functions.invoke('send-appointment-notification', {
         body: {
           appointmentId: selectedAppointment.id,
@@ -173,7 +182,16 @@ const StaffAppointments = () => {
 
       if (error) throw error;
 
-      // Send notification
+      // Send in-app notification to citizen
+      await supabase.from('in_app_notifications').insert({
+        user_id: selectedAppointment.citizen_id,
+        title: 'Appointment Rescheduled',
+        message: `Your appointment has been rescheduled to ${format(new Date(newDate), 'MMM d, yyyy')} at ${newTime}.${staffNotes ? ' Reason: ' + staffNotes : ''}`,
+        type: 'appointment_rescheduled',
+        related_id: selectedAppointment.id,
+      });
+
+      // Send email notification
       await supabase.functions.invoke('send-appointment-notification', {
         body: {
           appointmentId: selectedAppointment.id,
