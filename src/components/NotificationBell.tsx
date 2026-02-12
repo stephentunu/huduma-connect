@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
-import { Bell } from "lucide-react";
+import { Bell, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, format } from "date-fns";
 
 interface Notification {
   id: string;
@@ -108,9 +108,69 @@ const NotificationBell = () => {
         return "🔄";
       case "appointment_cancelled":
         return "❌";
+      case "id_ready":
+        return "🪪";
       default:
         return "🔔";
     }
+  };
+
+  const isDownloadable = (type: string) =>
+    type === "appointment_approved" || type === "appointment_rescheduled" || type === "id_ready";
+
+  const handleDownload = (notification: Notification) => {
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) return;
+
+    const dateStr = format(new Date(notification.created_at), "MMMM d, yyyy 'at' h:mm a");
+    const titleMap: Record<string, string> = {
+      appointment_approved: "Appointment Approval Notice",
+      appointment_rescheduled: "Appointment Reschedule Notice",
+      id_ready: "Document Collection Notice",
+    };
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>${titleMap[notification.type] || notification.title}</title>
+        <style>
+          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 40px auto; padding: 20px; color: #1a1a1a; }
+          .header { text-align: center; border-bottom: 3px solid #16a34a; padding-bottom: 16px; margin-bottom: 24px; }
+          .header h1 { font-size: 20px; color: #16a34a; margin: 0 0 4px; }
+          .header p { font-size: 12px; color: #666; margin: 0; }
+          .badge { display: inline-block; background: #16a34a; color: white; padding: 4px 12px; border-radius: 4px; font-size: 12px; font-weight: 600; margin-bottom: 16px; }
+          .content { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin-bottom: 20px; }
+          .content h2 { font-size: 16px; margin: 0 0 8px; }
+          .content p { font-size: 14px; line-height: 1.6; margin: 0; }
+          .meta { font-size: 12px; color: #666; margin-top: 16px; }
+          .footer { text-align: center; font-size: 11px; color: #999; margin-top: 32px; border-top: 1px solid #e5e7eb; padding-top: 16px; }
+          @media print { body { margin: 0; } }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>🇰🇪 Huduma Centre</h1>
+          <p>Government of Kenya — Official Notification</p>
+        </div>
+        <span class="badge">${titleMap[notification.type] || notification.title}</span>
+        <div class="content">
+          <h2>${notification.title}</h2>
+          <p>${notification.message}</p>
+        </div>
+        <div class="meta">
+          <p><strong>Date Issued:</strong> ${dateStr}</p>
+          <p><strong>Reference ID:</strong> ${notification.id.slice(0, 8).toUpperCase()}</p>
+        </div>
+        <div class="footer">
+          <p>This is an official notification from Huduma Centre. Please present this document at the centre.</p>
+          <p>Generated on ${format(new Date(), "MMMM d, yyyy")}</p>
+        </div>
+        <script>window.onload = function() { window.print(); }</script>
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
   };
 
   return (
@@ -158,9 +218,23 @@ const NotificationBell = () => {
                       <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
                         {notification.message}
                       </p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
-                      </p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <p className="text-xs text-muted-foreground">
+                          {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
+                        </p>
+                        {isDownloadable(notification.type) && (
+                          <button
+                            className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDownload(notification);
+                            }}
+                          >
+                            <Download className="h-3 w-3" />
+                            Download
+                          </button>
+                        )}
+                      </div>
                     </div>
                     {!notification.is_read && (
                       <span className="h-2 w-2 rounded-full bg-primary mt-1.5 shrink-0" />
